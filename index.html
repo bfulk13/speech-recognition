@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Speech Detection</title>
+  </head>
+  <body>
+    <div class="words" contenteditable>
+      <div class="bg"></div>
+      <div>
+        <div id="description"></div>
+        <h1 id="temp"></h1>
+        <div id="location"></div>
+      </div>
+    </div>
+
+    <script>
+      window.SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      const recognition = new SpeechRecognition();
+      recognition.interimResults = true;
+
+      let p = document.createElement("p");
+      const words = document.querySelector(".words");
+      words.appendChild(p);
+
+      recognition.addEventListener("result", e => {
+        console.log(e.results);
+        const transcript = Array.from(e.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join("");
+
+        p.textContent = transcript;
+        if (e.results[0].isFinal) {
+          p = document.createElement("p");
+          words.appendChild(p);
+        }
+        if (transcript.includes("get the weather")) {
+          getWeather();
+        }
+      });
+
+      const key = "";
+      if (key == "") console.log("Add your API key!");
+
+      const cityID = "Salt%20Lake%20City";
+
+      function getWeather(cityID) {
+        fetch(
+          `https://api.openweathermap.org/data/2.5/weather?id=${cityID}&appid=${key}`
+        )
+          .then(function(resp) {
+            return resp.json();
+          }) // Convert data to json
+          .then(function(data) {
+            drawWeather(data);
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+
+      function drawWeather(d) {
+        var celcius = Math.round(parseFloat(d.main.temp) - 273.15);
+        var fahrenheit = Math.round(
+          (parseFloat(d.main.temp) - 273.15) * 1.8 + 32
+        );
+        var description = d.weather[0].description;
+
+        document.getElementById("description").innerHTML = description;
+        document.getElementById("temp").innerHTML = celcius + "&deg;";
+        document.getElementById("location").innerHTML = d.name;
+
+        if (description.indexOf("rain") > 0) {
+          document.body.className = "rainy";
+        } else if (description.indexOf("cloud") > 0) {
+          document.body.className = "cloudy";
+        } else if (description.indexOf("sunny") > 0) {
+          document.body.className = "sunny";
+        } else {
+          document.body.className = "clear";
+        }
+      }
+
+      recognition.addEventListener("end", recognition.start);
+
+      recognition.start();
+    </script>
+
+    <style>
+      html {
+        font-size: 10px;
+      }
+
+      body {
+        background: #bada55;
+        font-family: "helvetica neue";
+        font-weight: 200;
+        font-size: 20px;
+      }
+
+      .words {
+        max-width: 500px;
+        margin: 50px auto;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.1);
+        padding: 1rem 2rem 1rem 5rem;
+        background: -webkit-gradient(
+            linear,
+            0 0,
+            0 100%,
+            from(#d9eaf3),
+            color-stop(4%, #fff)
+          )
+          0 4px;
+        background-size: 100% 3rem;
+        position: relative;
+        line-height: 3rem;
+      }
+
+      p {
+        margin: 0 0 3rem;
+      }
+
+      .words:before {
+        content: "";
+        position: absolute;
+        width: 4px;
+        top: 0;
+        left: 30px;
+        bottom: 0;
+        border: 1px solid;
+        border-color: transparent #efe4e4;
+      }
+
+      body.sunny {
+        background-image: linear-gradient(
+          to right top,
+          #ff4e50,
+          #ff713e,
+          #ff932b,
+          #ffb41d,
+          #f9d423
+        );
+      }
+      body.cloudy {
+        background-image: linear-gradient(
+          to right top,
+          #63747c,
+          #71858e,
+          #7f96a0,
+          #8da8b2,
+          #9bbac5
+        );
+      }
+      body.rainy {
+        background-image: linear-gradient(
+          to right top,
+          #637c7b,
+          #718e8c,
+          #7ea09e,
+          #8db2b0,
+          #9bc5c3
+        );
+      }
+    </style>
+  </body>
+</html>
